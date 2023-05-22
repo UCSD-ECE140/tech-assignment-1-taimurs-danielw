@@ -40,6 +40,9 @@ class Game:
         dx, dy = move.value
         new_loc = x+dx, y+dy
 
+        if not (0 <= new_loc[0] < self.__height) or not (0 <= new_loc[1] < self.__width):
+            return
+
         cell = self.map.get(new_loc)
         if isinstance(cell, Player) or isinstance(cell, Wall):
             return
