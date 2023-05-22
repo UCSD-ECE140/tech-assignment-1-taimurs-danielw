@@ -86,29 +86,27 @@ if __name__ == '__main__':
     player_3 = "Player3"
 
     client.subscribe(f"games/{lobby_name}/lobby")
-    client.subscribe(f'games/{lobby_name}/{player_1}/game_state')
+    client.subscribe(f'games/{lobby_name}/+/game_state')
+    client.subscribe(f'games/{lobby_name}/scores')
 
     client.publish("new_game", json.dumps({'lobby_name':lobby_name,
                                             'team_name':'ATeam',
-                                            'player_name' : player_1,
-                                            'ta_bot': False}))
+                                            'player_name' : player_1}))
     
     client.publish("new_game", json.dumps({'lobby_name':lobby_name,
-                                            'team_name':'ATeam',
-                                            'player_name' : player_2,
-                                            'ta_bot': False}))
+                                            'team_name':'BTeam',
+                                            'player_name' : player_2}))
     
-    client.publish("new_game", json.dumps({'lobby_name':lobby_name,
-                                        'team_name':'BTeam',
-                                        'player_name' : player_3,
-                                        'ta_bot': False}))
+    # client.publish("new_game", json.dumps({'lobby_name':lobby_name,
+    #                                     'team_name':'BTeam',
+    #                                     'player_name' : player_3}))
 
-
-    client.publish(f"games/{lobby_name}/lobby", "START")
-    client.publish(f"games/{lobby_name}/{player_1}/move", "UP")
-    client.publish(f"games/{lobby_name}/{player_2}/move", "DOWN")
-    time.sleep(5)
-    client.publish(f"games/{lobby_name}/{player_3}/move", "DOWN")
+    time.sleep(1)
+    client.publish(f"games/{lobby_name}/start", "START")
+    # client.publish(f"games/{lobby_name}/{player_1}/move", "UP")
+    # client.publish(f"games/{lobby_name}/{player_2}/move", "DOWN")
+    # client.publish(f"games/{lobby_name}/{player_3}/move", "DOWN")
+    # client.publish(f"games/{lobby_name}/start", "STOP")
 
 
     client.loop_forever()

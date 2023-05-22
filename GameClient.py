@@ -57,10 +57,13 @@ def on_message(client, userdata, msg):
         :param userdata: userdata is set when initiating the client, here it is userdata=None
         :param msg: the message with topic and payload
     """
-    topic_list = msg.topic.split("/")
-    dispatch[topic_list[-1]](client, topic_list, msg.payload)
-
     print(msg.topic + " " + str(msg.qos) + " " + str(msg.payload))
+    topic_list = msg.topic.split("/")
+
+    # Validate it is input we can deal with
+    if topic_list[-1] in dispatch.keys(): 
+        dispatch[topic_list[-1]](client, topic_list, msg.payload)
+
 
 
 # Dispatched function, adds player to a lobby & team
@@ -75,16 +78,14 @@ def add_player(client, topic_list, msg_payload):
     # If lobby doesn't exists...
     if player.lobby_name not in client.team_dict.keys():
         client.team_dict[player.lobby_name] = {}
-        client.team_dict[player.lobby_name]['ta_bot'] = player.ta_bot
         client.team_dict[player.lobby_name]['started'] = False
 
     if client.team_dict[player.lobby_name]['started']:
-        publish_error_to_lobby(player.lobby_name, "Game has already started, please make a new lobby")
+        publish_error_to_lobby(client, player.lobby_name, "Game has already started, please make a new lobby")
 
     add_team(client, player)
-    # client.subscribe(f'games/{player.lobby_name}/lobby')
 
-    print(f'Added Player {player.player_name} to Team {player.team_name}')
+    print(f'Added Player: {player.player_name} to Team: {player.team_name}')
 
 
 def add_team(client, player):
@@ -94,7 +95,6 @@ def add_team(client, player):
     # If team already exists, add player to existing list
     else:
         client.team_dict[player.lobby_name][player.team_name].append(player.player_name)
-
 
 move_to_Moveset = {
     'UP' : Moveset.UP,
@@ -110,8 +110,7 @@ def player_move(client, topic_list, msg_payload):
     if lobby_name in client.team_dict.keys():
         try:
             new_move = msg_payload.decode()
-            print(client.move_dict)
-            print(client.game_dict)
+
             client.move_dict[lobby_name][player_name] = (player_name, move_to_Moveset[new_move])
             game: Game = client.game_dict[lobby_name]
 
@@ -127,15 +126,16 @@ def player_move(client, topic_list, msg_payload):
                 # Clear move list
                 client.move_dict[lobby_name].clear()
                 print(game.map)
+                client.publish(f'games/{lobby_name}/scores', json.dumps(game.getScores()))
                 if game.gameOver():
                     # Publish game over, remove game
-                    publish_to_lobby(lobby_name, "Game Over: All coins have been collected")
+                    publish_to_lobby(client, lobby_name, "Game Over: All coins have been collected")
                     client.team_dict.pop(lobby_name)
                     client.move_dict.pop(lobby_name)
                     client.game_dict.pop(lobby_name)
 
         except Exception as e:
-            # raise e
+            raise e
             publish_error_to_lobby(client, lobby_name, e.__str__)
     else:
         publish_error_to_lobby(client, lobby_name, "Lobby name not found.")
@@ -143,14 +143,10 @@ def player_move(client, topic_list, msg_payload):
 
 # Dispatched function: Instantiates Game object
 def start_game(client, topic_list, msg_payload):
+    lobby_name = topic_list[1]
     if isinstance(msg_payload, bytes) and msg_payload.decode() == "START":
-        lobby_name = topic_list[1]
 
         if lobby_name in client.team_dict.keys():
-            if client.team_dict[lobby_name].pop("ta_bot"):
-                # TODO: Instantiate pathfinding player
-                pass
-            else:
                 # create new game
                 dict_copy = copy.deepcopy(client.team_dict[lobby_name])
                 dict_copy.pop('started')
@@ -159,6 +155,12 @@ def start_game(client, topic_list, msg_payload):
                 client.game_dict[lobby_name] = game
                 client.move_dict[lobby_name] = OrderedDict()
                 client.team_dict[lobby_name]["started"] = True
+                print(game.map)
+    elif isinstance(msg_payload, bytes) and msg_payload.decode() == "STOP":
+        publish_to_lobby(client, lobby_name, "Game Over: Game has been stopped")
+        client.team_dict.pop(lobby_name, None)
+        client.move_dict.pop(lobby_name, None)
+        client.game_dict.pop(lobby_name, None)
 
 
 def publish_error_to_lobby(client, lobby_name, error):
@@ -172,7 +174,7 @@ def publish_to_lobby(client, lobby_name, msg):
 dispatch = {
     'new_game' : add_player,
     'move' : player_move,
-    'lobby' : start_game,
+    'start' : start_game,
 }
 
 
@@ -205,7 +207,7 @@ if __name__ == '__main__':
     client.move_dict = {} # Keeps track of the games {{'lobby_name' : Game Object}
 
     client.subscribe("new_game")
-    client.subscribe('games/+/lobby')
+    client.subscribe('games/+/start')
     client.subscribe('games/+/+/move')
 
     client.loop_forever()
