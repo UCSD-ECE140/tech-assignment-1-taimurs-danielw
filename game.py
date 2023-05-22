@@ -117,26 +117,38 @@ class Game:
     def gameOver(self):
         return self.map.numCoins <= 0
 
+    def getScores(self):
+        scores = {}
+        for teamName, team in self.teams.items():
+            scores[teamName] = team.score
+        return scores
+
 
 if __name__ == '__main__':
     random.seed(1)
-    g = Game({'TeamA': ['Charles', 'Girish'], 'TeamB': ['James']}, 3,3)
+    g = Game({'TeamA': ['Charles', 'Girish'], 'TeamB': ['James']})
     print(g.map)
-    print(g.getGameData('Charles',10))
-    print(g.map.numCoins)
-    print(g.gameOver())
+    print(g.getScores())
+    multiMove = lambda name, moves: [g.movePlayer(name, move) for move in moves]
+    multiMove('James', (Moveset.RIGHT, Moveset.UP))
+    multiMove('Charles', (Moveset.RIGHT, Moveset.RIGHT, Moveset.DOWN))
 
-    g.movePlayer('James', Moveset.DOWN)
-    g.movePlayer('James', Moveset.LEFT)
-    print(g.map.numCoins)
-    print(g.gameOver())
+    print(g.getScores())
+    # print(g.getGameData('Charles',10))
+    # print(g.map.numCoins)
+    # print(g.gameOver())
 
-    g.movePlayer('James', Moveset.RIGHT)
-    print(g.map.numCoins)
-    print(g.gameOver())
-    g.movePlayer('James', Moveset.LEFT)
-    print(g.map.numCoins)
-    print(g.gameOver())
+    # g.movePlayer('James', Moveset.DOWN)
+    # g.movePlayer('James', Moveset.LEFT)
+    # print(g.map.numCoins)
+    # print(g.gameOver())
+    #
+    # g.movePlayer('James', Moveset.RIGHT)
+    # print(g.map.numCoins)
+    # print(g.gameOver())
+    # g.movePlayer('James', Moveset.LEFT)
+    # print(g.map.numCoins)
+    # print(g.gameOver())
     # cP = g.getPlayer('Charles')
     # gP = g.getPlayer('Girish')
     # jP = g.getPlayer('James')
