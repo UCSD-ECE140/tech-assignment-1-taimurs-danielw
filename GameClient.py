@@ -57,7 +57,7 @@ def on_message(client, userdata, msg):
         :param userdata: userdata is set when initiating the client, here it is userdata=None
         :param msg: the message with topic and payload
     """
-    print(msg.topic + " " + str(msg.qos) + " " + str(msg.payload))
+    print("message: " + msg.topic + " " + str(msg.qos) + " " + str(msg.payload))
     topic_list = msg.topic.split("/")
 
     # Validate it is input we can deal with
@@ -183,11 +183,10 @@ if __name__ == '__main__':
     
     broker_address = os.environ.get('BROKER_ADDRESS')
     broker_port = int(os.environ.get('BROKER_PORT'))
-    username = os.environ.get('USERNAME')
+    username = os.environ.get('USER_NAME')
     password = os.environ.get('PASSWORD')
-    client_id = os.environ.get('CLIENT_ID')
 
-    client = paho.Client(client_id=client_id, userdata=None, protocol=paho.MQTTv5)
+    client = paho.Client(client_id="GameClient", userdata=None, protocol=paho.MQTTv5)
     
     # enable TLS for secure connection
     client.tls_set(tls_version=mqtt.client.ssl.PROTOCOL_TLS)
@@ -197,9 +196,9 @@ if __name__ == '__main__':
     client.connect(broker_address, broker_port)
 
     # setting callbacks, use separate functions like above for better visibility
-    # client.on_subscribe = on_subscribe
+    client.on_subscribe = on_subscribe # Can comment out to not print when subscribing to new topics
     client.on_message = on_message
-    # client.on_publish = on_publish
+    client.on_publish = on_publish # Can comment out to not print when publishing to topics
     
     # custom dictionary to track players
     client.team_dict = {} # Keeps tracks of players before a game starts {'lobby_name' : {'team_name' : [player_name, ...]}}

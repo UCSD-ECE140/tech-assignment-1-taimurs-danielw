@@ -54,7 +54,7 @@ def on_message(client, userdata, msg):
         :param msg: the message with topic and payload
     """
 
-    print(msg.topic + " " + str(msg.qos) + " " + str(msg.payload))
+    print("message: " + msg.topic + " " + str(msg.qos) + " " + str(msg.payload))
 
 
 if __name__ == '__main__':
@@ -62,9 +62,8 @@ if __name__ == '__main__':
     
     broker_address = os.environ.get('BROKER_ADDRESS')
     broker_port = int(os.environ.get('BROKER_PORT'))
-    username = os.environ.get('USERNAME')
+    username = os.environ.get('USER_NAME')
     password = os.environ.get('PASSWORD')
-    client_id = os.environ.get('CLIENT_ID')
 
     client = paho.Client(client_id="Player1", userdata=None, protocol=paho.MQTTv5)
     
@@ -76,9 +75,9 @@ if __name__ == '__main__':
     client.connect(broker_address, broker_port)
 
     # setting callbacks, use separate functions like above for better visibility
-    client.on_subscribe = on_subscribe
+    client.on_subscribe = on_subscribe # Can comment out to not print when subscribing to new topics
     client.on_message = on_message
-    client.on_publish = on_publish
+    client.on_publish = on_publish # Can comment out to not print when publishing to topics
 
     lobby_name = "TestLobby"
     player_1 = "Player1"
@@ -97,16 +96,16 @@ if __name__ == '__main__':
                                             'team_name':'BTeam',
                                             'player_name' : player_2}))
     
-    # client.publish("new_game", json.dumps({'lobby_name':lobby_name,
-    #                                     'team_name':'BTeam',
-    #                                     'player_name' : player_3}))
+    client.publish("new_game", json.dumps({'lobby_name':lobby_name,
+                                        'team_name':'BTeam',
+                                        'player_name' : player_3}))
 
-    time.sleep(1)
+    time.sleep(1) # Wait a second to resolve game start
     client.publish(f"games/{lobby_name}/start", "START")
-    # client.publish(f"games/{lobby_name}/{player_1}/move", "UP")
-    # client.publish(f"games/{lobby_name}/{player_2}/move", "DOWN")
-    # client.publish(f"games/{lobby_name}/{player_3}/move", "DOWN")
-    # client.publish(f"games/{lobby_name}/start", "STOP")
+    client.publish(f"games/{lobby_name}/{player_1}/move", "UP")
+    client.publish(f"games/{lobby_name}/{player_2}/move", "DOWN")
+    client.publish(f"games/{lobby_name}/{player_3}/move", "DOWN")
+    client.publish(f"games/{lobby_name}/start", "STOP")
 
 
     client.loop_forever()
