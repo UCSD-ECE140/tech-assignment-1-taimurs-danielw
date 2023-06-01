@@ -54,7 +54,7 @@ def on_message(client, userdata, msg):
         :param msg: the message with topic and payload
     """
 
-    print(msg.topic + " " + str(msg.qos) + " " + str(msg.payload))
+    print("message: " + msg.topic + " " + str(msg.qos) + " " + str(msg.payload))
 
 
 if __name__ == '__main__':
@@ -62,7 +62,7 @@ if __name__ == '__main__':
     
     broker_address = os.environ.get('BROKER_ADDRESS')
     broker_port = int(os.environ.get('BROKER_PORT'))
-    username = os.environ.get('USERNAME')
+    username = os.environ.get('USER_NAME')
     password = os.environ.get('PASSWORD')
     client_id = os.environ.get('CLIENT_ID')
 
@@ -101,12 +101,12 @@ if __name__ == '__main__':
     #                                     'team_name':'BTeam',
     #                                     'player_name' : player_3}))
 
-    time.sleep(1)
+    time.sleep(1) # Wait a second to resolve game start
     client.publish(f"games/{lobby_name}/start", "START")
-    # client.publish(f"games/{lobby_name}/{player_1}/move", "UP")
-    # client.publish(f"games/{lobby_name}/{player_2}/move", "DOWN")
-    # client.publish(f"games/{lobby_name}/{player_3}/move", "DOWN")
-    # client.publish(f"games/{lobby_name}/start", "STOP")
+    client.publish(f"games/{lobby_name}/{player_1}/move", "UP")
+    client.publish(f"games/{lobby_name}/{player_2}/move", "DOWN")
+    client.publish(f"games/{lobby_name}/{player_3}/move", "DOWN")
+    client.publish(f"games/{lobby_name}/start", "STOP")
 
 
     client.loop_forever()
