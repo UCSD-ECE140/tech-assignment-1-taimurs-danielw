@@ -64,7 +64,6 @@ if __name__ == '__main__':
     broker_port = int(os.environ.get('BROKER_PORT'))
     username = os.environ.get('USER_NAME')
     password = os.environ.get('PASSWORD')
-    client_id = os.environ.get('CLIENT_ID')
 
     client = paho.Client(client_id="Player1", userdata=None, protocol=paho.MQTTv5)
     
@@ -97,9 +96,9 @@ if __name__ == '__main__':
                                             'team_name':'BTeam',
                                             'player_name' : player_2}))
     
-    # client.publish("new_game", json.dumps({'lobby_name':lobby_name,
-    #                                     'team_name':'BTeam',
-    #                                     'player_name' : player_3}))
+    client.publish("new_game", json.dumps({'lobby_name':lobby_name,
+                                        'team_name':'BTeam',
+                                        'player_name' : player_3}))
 
     time.sleep(1) # Wait a second to resolve game start
     client.publish(f"games/{lobby_name}/start", "START")

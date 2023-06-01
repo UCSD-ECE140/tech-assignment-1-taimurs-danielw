@@ -185,9 +185,8 @@ if __name__ == '__main__':
     broker_port = int(os.environ.get('BROKER_PORT'))
     username = os.environ.get('USER_NAME')
     password = os.environ.get('PASSWORD')
-    client_id = os.environ.get('CLIENT_ID')
 
-    client = paho.Client(client_id=client_id, userdata=None, protocol=paho.MQTTv5)
+    client = paho.Client(client_id="GameClient", userdata=None, protocol=paho.MQTTv5)
     
     # enable TLS for secure connection
     client.tls_set(tls_version=mqtt.client.ssl.PROTOCOL_TLS)
