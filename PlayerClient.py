@@ -75,9 +75,9 @@ if __name__ == '__main__':
     client.connect(broker_address, broker_port)
 
     # setting callbacks, use separate functions like above for better visibility
-    client.on_subscribe = on_subscribe
+    client.on_subscribe = on_subscribe # Can comment out to not print when subscribing to new topics
     client.on_message = on_message
-    client.on_publish = on_publish
+    client.on_publish = on_publish # Can comment out to not print when publishing to topics
 
     lobby_name = "TestLobby"
     player_1 = "Player1"
