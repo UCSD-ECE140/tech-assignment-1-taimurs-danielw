@@ -155,6 +155,11 @@ def start_game(client, topic_list, msg_payload):
                 client.game_dict[lobby_name] = game
                 client.move_dict[lobby_name] = OrderedDict()
                 client.team_dict[lobby_name]["started"] = True
+
+                for player in game.all_players.keys():
+                    client.publish(f'games/{lobby_name}/{player}/game_state', json.dumps(game.getGameData(player)))
+
+
                 print(game.map)
     elif isinstance(msg_payload, bytes) and msg_payload.decode() == "STOP":
         publish_to_lobby(client, lobby_name, "Game Over: Game has been stopped")
