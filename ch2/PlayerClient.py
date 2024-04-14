@@ -102,9 +102,11 @@ if __name__ == '__main__':
 
     time.sleep(1) # Wait a second to resolve game start
     client.publish(f"games/{lobby_name}/start", "START")
+    
     client.publish(f"games/{lobby_name}/{player_1}/move", "UP")
     client.publish(f"games/{lobby_name}/{player_2}/move", "RIGHT")
     client.publish(f"games/{lobby_name}/{player_3}/move", "DOWN")
+    
     client.publish(f"games/{lobby_name}/start", "STOP")
 
 

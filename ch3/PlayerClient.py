@@ -67,7 +67,7 @@ def get_user_direction(player) -> str:
     directions  = {1: "UP", 2: "DOWN", 3: "LEFT", 4: "RIGHT"}
     dir = directions.get(int(user_input))
     return dir
-    
+
     
 def get_player_names() -> tuple:
     player = input("What is your name? \n")
@@ -97,12 +97,13 @@ if __name__ == '__main__':
     client.on_publish = on_publish # Can comment out to not print when publishing to topics
 
     lobby_name = "TestLobby"
-    player_1 = "faraz"
-    player_2 = "taimur"
-    player_3 = "hamza"
+    player_1 = "tom"
+    player_2 = "dick"
+    player_3 = "harry"
+    player_4 = "johnson"
     #test_pla = NewPlayer(lobby_name=lobby_name, team_name= "test_team", player_name="taimur")
     
-    lobby_name = input("What is the lobby name? ")
+    lobby_name = input("What is the lobby name? \n")
     
 
     client.subscribe(f'games/{lobby_name}/+/game_state')
@@ -126,7 +127,7 @@ if __name__ == '__main__':
         client.publish(f"games/{lobby_name}/{player_1}/move", get_user_direction(player_1))
         client.publish(f"games/{lobby_name}/{player_2}/move", get_user_direction(player_2))
         client.publish(f"games/{lobby_name}/{player_3}/move", get_user_direction(player_3))
-        
+        client.publish(f"games/{lobby_name}/{player_4}/move", get_user_direction(player_4))
 
-    print("YOUR TIME IS UP HAHAHAHAHA")
+    print("YOUR TIME IS UP HAHAHAHAHA \n")
     client.publish(f"games/{lobby_name}/start", "STOP")
