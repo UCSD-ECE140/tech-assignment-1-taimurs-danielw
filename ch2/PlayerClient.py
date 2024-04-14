@@ -60,12 +60,12 @@ def on_message(client, userdata, msg):
 if __name__ == '__main__':
     load_dotenv(dotenv_path='./credentials.env')
     
-    broker_address = os.environ.get('BROKER_ADDRESS')
-    broker_port = int(os.environ.get('BROKER_PORT'))
-    username = os.environ.get('USER_NAME')
-    password = os.environ.get('PASSWORD')
+    broker_address = os.getenv('BROKER_ADDRESS')
+    broker_port = int(os.getenv('BROKER_PORT'))
+    username = os.getenv('USER_NAME')
+    password = os.getenv('PASSWORD')
 
-    client = paho.Client(callback_api_version=paho.CallbackAPIVersion.VERSION1, client_id="Player1", userdata=None, protocol=paho.MQTTv5)
+    client = paho.Client(client_id="Player1", userdata=None, protocol=paho.MQTTv5)
     
     # enable TLS for secure connection
     client.tls_set(tls_version=mqtt.client.ssl.PROTOCOL_TLS)
@@ -103,7 +103,7 @@ if __name__ == '__main__':
     time.sleep(1) # Wait a second to resolve game start
     client.publish(f"games/{lobby_name}/start", "START")
     client.publish(f"games/{lobby_name}/{player_1}/move", "UP")
-    client.publish(f"games/{lobby_name}/{player_2}/move", "DOWN")
+    client.publish(f"games/{lobby_name}/{player_2}/move", "RIGHT")
     client.publish(f"games/{lobby_name}/{player_3}/move", "DOWN")
     client.publish(f"games/{lobby_name}/start", "STOP")
 
