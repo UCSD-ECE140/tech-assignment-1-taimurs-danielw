@@ -5,9 +5,12 @@ from dotenv import load_dotenv
 import paho.mqtt.client as paho
 from paho import mqtt
 from InputTypes import NewPlayer
+from game import Game
 import time
 
+
 game_over = False
+suggestion_received = False
 
 # setting callbacks for different events to see if it works, print the message etc.
 def on_connect(client, userdata, flags, rc, properties=None):
@@ -31,7 +34,7 @@ def on_publish(client, userdata, mid, properties=None):
         :param mid: variable returned from the corresponding publish() call, to allow outgoing messages to be tracked
         :param properties: can be used in MQTTv5, but is optional
     """
-    print("mid: " + str(mid))
+    print("\n mid: " + str(mid))
 
 
 # print which topic was subscribed to
@@ -44,7 +47,7 @@ def on_subscribe(client, userdata, mid, granted_qos, properties=None):
         :param granted_qos: this is the qos that you declare when subscribing, use the same one for publishing
         :param properties: can be used in MQTTv5, but is optional
     """
-    print("Subscribed: " + str(mid) + " " + str(granted_qos))
+    print("\n Subscribed: " + str(mid) + " " + str(granted_qos) + "\n")
 
 
 # print message, useful for checking if it was successful
@@ -56,17 +59,58 @@ def on_message(client, userdata, msg):
         :param msg: the message with topic and payload
     """
 
+    global suggestion_received
     print("message: " + msg.topic + " " + str(msg.qos) + " " + str(msg.payload))
-    if "Game Over: " in str(msg.payload): 
+    message_content = json.loads(msg.payload.decode())
+    if "Game Over" in message_content:
         game_over = True
+    elif 'suggestion' in message_content:
+        print(f"Suggestion received: {message_content['suggestion']}")
+        suggestion_received = True  # Set the flag when a suggestion is received
 
 
 
-def get_user_direction(player) -> str: 
-    user_input = input(f"what direction should {player} move in?   \n")
-    directions  = {1: "UP", 2: "DOWN", 3: "LEFT", 4: "RIGHT"}
-    dir = directions.get(int(user_input))
-    return dir
+def get_user_direction(player, client, lobby_name, teammate_topic):
+    global suggestion_received
+    suggestion_received = False  # Ensure the flag is reset at the start of the function
+
+    while True:
+        print("\nOptions:")
+        print("1. Move UP")
+        print("2. Move DOWN")
+        print("3. Move LEFT")
+        print("4. Move RIGHT")
+        print("5. Request move suggestion from teammate")
+        user_input = input(f"\n What direction should {player} move in?   \n")
+        
+        directions = {1: "UP", 2: "DOWN", 3: "LEFT", 4: "RIGHT"}
+        
+        if int(user_input) == 5:
+            print("Requesting suggestion...")
+            
+            user_suggestion = input("Provide a suggesed input from 1 to 4 as mentioned above")
+            if int(user_suggestion) in [1,2,3,4]: 
+                suggestion_received = True 
+                            
+                client.publish(teammate_topic, json.dumps({'request': int(user_suggestion), 'from': player}))
+                client.subscribe(teammate_topic.replace('request', 'response'))
+            
+            # Wait for suggestion or timeout
+            start_time = time.time()
+            timeout = 5  # seconds
+            while time.time() - start_time < timeout and not suggestion_received:
+                time.sleep(1)
+            if suggestion_received:
+                print(f"Suggestion received, the suggested move is {user_suggestion} \n")
+                suggestion_received = False  # Reset the flag
+            else:
+                print("Teammate does not care. Please choose your move.")
+        else:
+            dir = directions.get(int(user_input))
+            if dir:
+                return dir
+            else:
+                print("Invalid input, please try again.")
 
     
 def get_player_names() -> tuple:
@@ -92,9 +136,9 @@ if __name__ == '__main__':
     client.connect(broker_address, broker_port)
 
     # setting callbacks, use separate functions like above for better visibility
-    client.on_subscribe = on_subscribe # Can comment out to not print when subscribing to new topics
+    #client.on_subscribe = on_subscribe # Can comment out to not print when subscribing to new topics
     client.on_message = on_message
-    client.on_publish = on_publish # Can comment out to not print when publishing to topics
+    #client.on_publish = on_publish # Can comment out to not print when publishing to topics
 
     lobby_name = "TestLobby"
     player_1 = "tom"
@@ -117,17 +161,35 @@ if __name__ == '__main__':
                                             'team_name':team,
                                             'player_name' : player}))
 
-    time.sleep(1) # Wait a second to resolve game start
+    time.sleep(5) # Wait a second to resolve game start
     client.publish(f"games/{lobby_name}/start", "START")
-    
     client.loop_start()
     
     while not game_over:
-    
-        client.publish(f"games/{lobby_name}/{player_1}/move", get_user_direction(player_1))
-        client.publish(f"games/{lobby_name}/{player_2}/move", get_user_direction(player_2))
-        client.publish(f"games/{lobby_name}/{player_3}/move", get_user_direction(player_3))
-        client.publish(f"games/{lobby_name}/{player_4}/move", get_user_direction(player_4))
+        # Player 1's turn
+        move = get_user_direction(player_1, client, lobby_name, f"games/{lobby_name}/{player_2}/request")
+        if move:
+            client.publish(f"games/{lobby_name}/{player_1}/move", move)
+        #print(game.map)
+
+        # Player 2
+        move = get_user_direction(player_2, client, lobby_name, f"games/{lobby_name}/{player_1}/request")
+        if move:
+            client.publish(f"games/{lobby_name}/{player_2}/move", move)
+
+       #print(game.map)
+
+        # Player 4
+        move = get_user_direction(player_3, client, lobby_name, f"games/{lobby_name}/{player_4}/request")
+        if move:
+            client.publish(f"games/{lobby_name}/{player_3}/move", move)
+        #print(game.map)
+        
+        # Player 4
+        move = get_user_direction(player_4, client, lobby_name, f"games/{lobby_name}/{player_3}/request")
+        if move:
+            client.publish(f"games/{lobby_name}/{player_4}/move", move)
+        #print(game.map)
 
     print("YOUR TIME IS UP HAHAHAHAHA \n")
     client.publish(f"games/{lobby_name}/start", "STOP")
